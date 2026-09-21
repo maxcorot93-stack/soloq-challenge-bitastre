@@ -1,0 +1,6 @@
+{
+  "name": "soloq-challenge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Classement SoloQ live entre potes (API Riot Games) — déployable sur Vercel."
+}

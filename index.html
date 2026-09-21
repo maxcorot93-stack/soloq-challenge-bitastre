@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SoloQ Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#010a13; --bg2:#04121f; --panel:#0a1a2b; --panel2:#0d2135;
+    --gold:#c8aa6e; --gold-b:#f0e6d2; --gold-d:#785a28;
+    --teal:#0ac8b9; --teal-d:#0397ab; --blue-b:#cdfafa; --hex:#091428;
+    --txt:#f0e6d2; --dim:#a3b5c8; --grey:#5b5a56;
+    --green:#1fbf6b; --red:#ff5c5c;
+    --line:rgba(200,170,110,.22); --line2:rgba(200,170,110,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1100px 520px at 50% -180px, #0a2033 0, transparent 60%),
+      linear-gradient(180deg,#02111d,var(--bg));
+    color:var(--txt); font-family:Inter,system-ui,sans-serif; min-height:100vh;
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 16px 70px}
+  /* ---- entête ornementale ---- */
+  header{text-align:center;margin-bottom:16px}
+  .orn{display:flex;align-items:center;justify-content:center;gap:16px;color:var(--gold)}
+  .orn::before,.orn::after{content:"";height:1px;width:min(180px,26vw);
+    background:linear-gradient(90deg,transparent,var(--gold-d),var(--gold))}
+  .orn::after{background:linear-gradient(90deg,var(--gold),var(--gold-d),transparent)}
+  .orn i{font-style:normal;transform:rotate(45deg);width:8px;height:8px;border:1px solid var(--gold);display:inline-block}
+  h1{font-family:Cinzel,serif;margin:8px 0 0;font-weight:800;letter-spacing:2px;
+    font-size:clamp(26px,5.2vw,44px);text-transform:uppercase;
+    background:linear-gradient(180deg,var(--gold-b) 10%,var(--gold) 55%,var(--gold-d));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 2px 10px rgba(200,170,110,.18))}
+  .sub{color:var(--dim);font-size:12.5px;margin-top:10px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+  .pill{background:var(--hex);border:1px solid var(--line);border-radius:4px;padding:4px 11px;letter-spacing:1px;text-transform:uppercase;font-size:11px}
+  .pill.live{color:var(--teal);border-color:rgba(10,200,185,.4)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;margin-right:6px;box-shadow:0 0 8px var(--teal);animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  /* ---- bandeau semaine ---- */
+  .week{margin:14px 0 18px;border:1px solid var(--line);border-radius:6px;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel2),var(--panel))}
+  .week .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 16px;border-bottom:1px solid var(--line)}
+  .week .lab{font-family:Cinzel,serif;letter-spacing:2px;color:var(--gold);font-size:13px;text-transform:uppercase}
+  .week .range{color:var(--dim);font-size:13px}
+  .week .reset{font-size:12px;color:var(--blue-b)}
+  .week .reset b{font-variant-numeric:tabular-nums}
+  .week .note{padding:8px 16px;font-size:12px;color:var(--dim)}
+  .banner{background:#2a2410;border:1px solid #6b5a1e;color:var(--gold-b);border-radius:6px;padding:10px 14px;margin:0 0 16px;font-size:13px;text-align:center}
+  /* ---- highlights ---- */
+  .highlights{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+  .hl{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+  .hl::before{content:"";position:absolute;top:6px;left:6px;width:7px;height:7px;border-top:1px solid var(--gold);border-left:1px solid var(--gold);opacity:.6}
+  .hl::after{content:"";position:absolute;bottom:6px;right:6px;width:7px;height:7px;border-bottom:1px solid var(--gold);border-right:1px solid var(--gold);opacity:.6}
+  .hl .lab{font-size:10.5px;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px}
+  .hl .val{font-size:16px;font-weight:700;margin-top:4px;display:flex;align-items:center;gap:8px}
+  .hl .big{font-family:Cinzel,serif;font-size:20px}
+  /* ---- table ---- */
+  table{width:100%;border-collapse:separate;border-spacing:0 8px}
+  thead th{font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--gold);text-align:left;padding:0 12px 4px;font-weight:600;opacity:.85}
+  th.c,td.c{text-align:center}
+  .row{background:linear-gradient(180deg,var(--panel2),var(--panel));cursor:pointer;transition:filter .15s}
+  .row:hover{filter:brightness(1.14)}
+  .row.open{background:linear-gradient(180deg,#123049,#0d2135)}
+  .row td{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:11px 12px;vertical-align:middle}
+  .row td:first-child{border-left:2px solid var(--line2);border-radius:6px 0 0 6px}
+  .row.open td:first-child{border-left-color:var(--gold)}
+  .row td:last-child{border-right:1px solid var(--line);border-radius:0 6px 6px 0}
+  .pos{font-family:Cinzel,serif;font-weight:700;font-size:19px;width:34px;text-align:center;color:var(--grey)}
+  .pos.p1{color:#f4d35e} .pos.p2{color:#cfd8e6} .pos.p3{color:#d8975a}
+  .player{display:flex;align-items:center;gap:11px;min-width:0}
+  .av{position:relative;width:44px;height:44px;flex:0 0 auto}
+  .av img{width:44px;height:44px;border-radius:8px;background:var(--hex);object-fit:cover}
+  .av{border:2px solid var(--gold-d);border-radius:10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+  .nm{font-family:Cinzel,serif;font-weight:600;font-size:15px;letter-spacing:.4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tg{color:var(--dim);font-size:11.5px;margin-top:1px}
+  .badge{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:5px;font-weight:700;font-size:13px;border:1px solid rgba(255,255,255,.12);white-space:nowrap}
+  .crest{width:16px;height:16px;transform:rotate(45deg);border-radius:3px;display:inline-block}
+  .lp{font-weight:800}.lp small{color:var(--dim);font-weight:600;font-size:10px;margin-left:2px}
+  .wl{font-size:12.5px}.wlbar{height:5px;border-radius:3px;background:#7a2b2b;overflow:hidden;margin-top:5px;width:96px}
+  .wlbar>i{display:block;height:100%;background:var(--green)}
+  .wr{color:var(--dim);font-size:10.5px;margin-top:3px}
+  .delta{font-weight:800;font-variant-numeric:tabular-nums;font-size:14px}
+  .up{color:var(--green)}.down{color:var(--red)}.flat{color:var(--grey)}
+  /* jauge hebdo */
+  .gauge{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:120px}
+  .pips{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;width:120px}
+  .pips i{height:9px;border-radius:1px;background:#1b2c3f;border:1px solid #223347}
+  .pips i.f{background:linear-gradient(180deg,var(--teal),var(--teal-d));border-color:var(--teal-d)}
+  .pips i.warn{background:linear-gradient(180deg,#e8c15a,#a9852f);border-color:#a9852f}
+  .pips i.over{background:linear-gradient(180deg,#ff6b6b,#b83232);border-color:#b83232}
+  .gnum{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .gnum b{color:var(--txt)} .gnum.over b{color:var(--red)}
+  .chev{color:var(--gold);font-size:12px;transition:transform .2s;display:inline-block}
+  .row.open .chev{transform:rotate(90deg)}
+  .spark{width:88px;height:26px}
+  .err{color:var(--red);font-size:12px}.unranked{color:var(--grey);font-style:italic}
+  /* ---- panneau détaillé ---- */
+  .detail>td{padding:0 !important;border:none !important}
+  .dbox{margin:-2px 0 6px;background:linear-gradient(180deg,#0c2236,#081522);border:1px solid var(--line);border-top:2px solid var(--gold);border-radius:0 0 8px 8px;
+    display:grid;grid-template-columns:1.1fr 1fr;gap:0}
+  .dcol{padding:16px 18px}
+  .dcol+.dcol{border-left:1px solid var(--line)}
+  .dtitle{font-family:Cinzel,serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:0 0 10px}
+  .chart{width:100%;height:150px}
+  .chart .grid{stroke:var(--line);stroke-width:1}
+  .chart .axis{fill:var(--dim);font-size:10px}
+  .netlp{font-family:Cinzel,serif;font-size:22px;margin-top:6px}
+  .games{display:flex;flex-direction:column;gap:6px}
+  .game{display:flex;align-items:center;gap:10px;background:var(--hex);border:1px solid var(--line);border-left:3px solid var(--green);border-radius:5px;padding:7px 10px}
+  .game.loss{border-left-color:var(--red)}
+  .game .ci{width:38px;height:38px;border-radius:7px;border:1px solid var(--line);flex:0 0 auto}
+  .game .g-main{flex:1;min-width:0}
+  .game .g-champ{font-weight:700;font-size:13px}
+  .game .g-sub{color:var(--dim);font-size:11px;margin-top:2px}
+  .game .g-kda{text-align:right;font-variant-numeric:tabular-nums;font-size:12.5px}
+  .game .g-kda b{font-size:14px}
+  .game .res{font-family:Cinzel,serif;font-weight:700;font-size:12px;width:44px;text-align:center}
+  .win .res{color:var(--green)} .loss .res{color:var(--red)}
+  .loading{color:var(--dim);font-size:12px;padding:8px 0}
+  footer{margin-top:28px;text-align:center;color:var(--grey);font-size:11.5px;line-height:1.7}
+  @media(max-width:720px){
+    .hide-sm{display:none}
+    .dbox{grid-template-columns:1fr}.dcol+.dcol{border-left:none;border-top:1px solid var(--line)}
+    .wrap{padding:18px 10px 50px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="orn"><i></i></div>
+    <h1 id="title">SoloQ Challenge</h1>
+    <div class="sub">
+      <span class="pill live"><span class="dot"></span>en direct</span>
+      <span class="pill" id="platform">EUW</span>
+      <span id="updated">…</span>
+    </div>
+  </header>
+
+  <div class="week" id="week"></div>
+  <div id="banner" class="banner" style="display:none"></div>
+  <div id="highlights" class="highlights"></div>
+
+  <table>
+    <thead><tr>
+      <th class="c">#</th><th>Invocateur</th><th>Rang</th>
+      <th class="c hide-sm">V / D</th>
+      <th class="c">Games / semaine</th>
+      <th class="c" id="th-gain">LP</th>
+      <th class="c hide-sm">Progression</th>
+      <th></th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <footer>
+    Classement par palier réel · màj auto 60&nbsp;s · clique un invocateur pour son historique.<br>
+    Plafond du challenge : <b id="capfoot">20</b> games classées / semaine (reset lundi 00:01, heure de Paris). Données : API Riot Games.
+  </footer>
+</div>
+
+<script>
+const TIER_FR={IRON:'Fer',BRONZE:'Bronze',SILVER:'Argent',GOLD:'Or',PLATINUM:'Platine',EMERALD:'Émeraude',DIAMOND:'Diamant',MASTER:'Maître',GRANDMASTER:'Grand Maître',CHALLENGER:'Challenger'};
+const TIER_COL={IRON:'#8a8a8a',BRONZE:'#b07a45',SILVER:'#a7b6c6',GOLD:'#e0b24c',PLATINUM:'#3fb8ad',EMERALD:'#37c26b',DIAMOND:'#5aa9ff',MASTER:'#c06bd6',GRANDMASTER:'#e05a5a',CHALLENGER:'#f1c40f'};
+const NODIV=t=>['MASTER','GRANDMASTER','CHALLENGER'].includes(t);
+const ROLE_FR={TOP:'Top',JUNGLE:'Jungle',MIDDLE:'Mid',BOTTOM:'ADC',UTILITY:'Support'};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let CUR=null, platform='euw1', ver='15.18.1';
+const openSet=new Set(), histCache={};
+
+function opgg(p){const reg=({euw1:'euw',eun1:'eune',na1:'na',kr:'kr',br1:'br',jp1:'jp'})[platform]||'euw';return `https://op.gg/summoners/${reg}/${encodeURIComponent(p.name)}-${encodeURIComponent(p.tag)}`;}
+function fmtDate(t){return new Date(t).toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});}
+
+function badge(p){
+  if(p.error)return `<span class="err">⚠ ${esc(p.error)}</span>`;
+  if(!p.tier)return `<span class="unranked">Non classé</span>`;
+  const c=TIER_COL[p.tier]||'#888',div=NODIV(p.tier)?'':' '+p.division;
+  return `<span class="badge" style="background:${c}1e;color:${c};border-color:${c}55"><span class="crest" style="background:${c}"></span>${TIER_FR[p.tier]||p.tier}${div} <span class="lp">${p.lp}<small>LP</small></span></span>`;
+}
+function wl(p){if(p.error||!p.games)return '<span class="wr">—</span>';return `<div class="wl">${p.wins}<span style="color:var(--dim)">V</span> ${p.losses}<span style="color:var(--dim)">D</span></div><div class="wlbar"><i style="width:${p.winrate}%"></i></div><div class="wr">${p.winrate}% · ${p.games}g</div>`;}
+function delta(p,has){if(!has||p.error||p.lpGained==null)return '<span class="flat">—</span>';const g=p.lpGained,cls=g>0?'up':g<0?'down':'flat',a=g>0?'▲':g<0?'▼':'–';return `<span class="delta ${cls}">${a} ${g>0?'+':''}${g}</span>`;}
+function gauge(p,cap){
+  if(p.error)return '';
+  const n=p.weeklyGames||0,over=n>cap;
+  let pips='';for(let i=0;i<cap;i++){let cl='';if(i<n){cl=over?'over':(n>=cap-3?'warn':'f');}pips+=`<i class="${cl}"></i>`;}
+  return `<div class="gauge"><div class="pips">${pips}</div><div class="gnum ${over?'over':''}"><b>${n}</b> / ${cap}${over?' ⚠':''}</div></div>`;
+}
+function sparkline(p,history){
+  if(!history||history.length<2)return '<span class="wr">—</span>';
+  const s=history.map(h=>h.s&&h.s[p.riotId]).filter(v=>v!=null);if(s.length<2)return '<span class="wr">—</span>';
+  const w=88,h=26,pad=3,mn=Math.min(...s),mx=Math.max(...s),rg=(mx-mn)||1;
+  const pts=s.map((v,i)=>`${(pad+i*(w-2*pad)/(s.length-1)).toFixed(1)},${(h-pad-(v-mn)/rg*(h-2*pad)).toFixed(1)}`).join(' ');
+  const col=s[s.length-1]>=s[0]?'var(--green)':'var(--red)';
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts}"/></svg>`;
+}
+function lpChart(p,history){
+  const s=(history||[]).map(h=>({t:h.t,v:h.s&&h.s[p.riotId]})).filter(x=>x.v!=null);
+  if(s.length<2)return `<div class="loading">Pas encore assez de données de progression (la courbe se remplit au fil des jours).</div>`;
+  const w=360,h=150,px=34,py=16,mn=Math.min(...s.map(x=>x.v)),mx=Math.max(...s.map(x=>x.v)),rg=(mx-mn)||1;
+  const X=i=>px+i*(w-px-8)/(s.length-1),Y=v=>h-py-(v-mn)/rg*(h-2*py);
+  const pts=s.map((x,i)=>`${X(i).toFixed(1)},${Y(x.v).toFixed(1)}`);
+  const area=`M${X(0)},${h-py} L${pts.join(' L')} L${X(s.length-1)},${h-py} Z`;
+  const net=Math.round(s[s.length-1].v-s[0].v),cls=net>0?'up':net<0?'down':'flat';
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--gold)" stop-opacity=".35"/><stop offset="1" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>
+    <line class="grid" x1="${px}" y1="${py}" x2="${w-8}" y2="${py}"/><line class="grid" x1="${px}" y1="${h-py}" x2="${w-8}" y2="${h-py}"/>
+    <text class="axis" x="4" y="${py+4}">${mx}</text><text class="axis" x="4" y="${h-py}">${mn}</text>
+    <path d="${area}" fill="url(#ga)"/>
+    <polyline fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${pts.join(' ')}"/>
+  </svg><div class="netlp ${cls}">${net>0?'+':''}${net} LP <span style="font-size:12px;color:var(--dim)">depuis le début</span></div>`;
+}
+function gameRow(g){
+  const cls=g.win?'win':'loss',res=g.remake?'Remake':(g.win?'Victoire':'Défaite');
+  const ci=`https://ddragon.leagueoflegends.com/cdn/${ver}/img/champion/${encodeURIComponent(g.champion)}.png`;
+  const role=ROLE_FR[g.role]||'';
+  return `<div class="game ${cls}"><img class="ci" src="${ci}" onerror="this.style.visibility='hidden'"/>
+    <div class="g-main"><div class="g-champ">${esc(g.champion)}</div><div class="g-sub">${role?role+' · ':''}${g.durationMin} min · ${fmtDate(g.endTs)}</div></div>
+    <div class="g-kda"><b>${g.kills}/${g.deaths}/${g.assists}</b><div class="g-sub">${g.kda} KDA · ${g.cs} CS</div></div>
+    <div class="res">${res}</div></div>`;
+}
+async function loadHistory(p,mount){
+  if(CUR&&CUR.demo){mount.innerHTML=(DEMO_GAMES.map(gameRow).join(''));return;}
+  if(histCache[p.riotId]){mount.innerHTML=histCache[p.riotId];return;}
+  mount.innerHTML='<div class="loading">Chargement de l\'historique…</div>';
+  try{
+    const r=await fetch('/api/history?p='+encodeURIComponent(p.riotId),{cache:'no-store'});
+    const d=await r.json();
+    if(!d.games||!d.games.length){mount.innerHTML='<div class="loading">Aucune game classée récente.</div>';return;}
+    const html=d.games.map(gameRow).join('');histCache[p.riotId]=html;mount.innerHTML=html;
+  }catch(e){mount.innerHTML='<div class="loading">Historique indisponible.</div>';}
+}
+function toggle(id){
+  const p=CUR.players.find(x=>x.riotId===id);if(!p||p.error)return;
+  if(openSet.has(id))openSet.delete(id);else openSet.add(id);
+  render(CUR);
+}
+
+function render(d){
+  CUR=d;
+  document.getElementById('title').textContent=d.challengeName||'SoloQ Challenge';
+  document.title=d.challengeName||'SoloQ Challenge';
+  platform=d.platform||'euw1'; ver=d.ddragonVersion||ver;
+  const cap=d.weeklyCap||20; document.getElementById('capfoot').textContent=cap;
+  document.getElementById('platform').textContent=platform.toUpperCase().replace(/\d+$/,'');
+  const ok=(d.players||[]).filter(p=>!p.error), has=!!d.hasHistory;
+
+  // semaine + reset
+  if(d.week){
+    const now=Date.now(),left=Math.max(0,d.week.end-now);
+    const dd=Math.floor(left/864e5),hh=Math.floor(left%864e5/36e5),mm=Math.floor(left%36e5/6e4);
+    document.getElementById('week').innerHTML=
+      `<div class="top"><span class="lab">◆ Semaine en cours</span>
+       <span class="range">${fmtDate(d.week.start)} → ${fmtDate(d.week.end-86400000)}</span>
+       <span class="reset">reset dans <b>${dd}j ${hh}h ${mm}m</b></span></div>
+       <div class="note">Chaque invocateur peut jouer <b style="color:var(--gold-b)">${cap} games classées</b> cette semaine. Compteur remis à zéro chaque lundi 00:01 (Paris).</div>`;
+  }
+  // bandeau
+  const b=document.getElementById('banner');
+  if(d.demo){b.style.display='block';b.innerHTML='🎮 <b>Mode démo</b> — données d\'exemple. Déploie sur Vercel avec ta clé Riot pour le live.';}
+  else if(d.error){b.style.display='block';b.innerHTML='⚠ '+esc(d.error);}
+  else if(!has){b.style.display='block';b.innerHTML='ℹ️ Ajoute une base <b>Upstash</b> (gratuit) pour la progression LP + les courbes. Voir le README.';}
+  else b.style.display='none';
+  document.getElementById('th-gain').style.opacity=has?1:.4;
+
+  const secs=Math.max(0,Math.round((Date.now()-(d.updatedAt||Date.now()))/1000));
+  document.getElementById('updated').textContent=d.demo?'exemple':(secs<5?'à l\'instant':'màj il y a '+secs+'s');
+
+  // highlights
+  const hl=document.getElementById('highlights');hl.innerHTML='';
+  if(ok.length){
+    const leader=ok[0], climber=has?ok.slice().sort((a,b)=>(b.lpGained||0)-(a.lpGained||0))[0]:null;
+    const grind=ok.slice().sort((a,b)=>(b.weeklyGames||0)-(a.weeklyGames||0))[0];
+    const over=ok.filter(p=>p.overCap).length;
+    const card=(l,v)=>`<div class="hl"><div class="lab">${l}</div><div class="val">${v}</div></div>`;
+    hl.innerHTML=card('👑 En tête',`<span class="big">${esc(leader.name)}</span>`)
+      +(climber&&climber.lpGained>0?card('🚀 Meilleur grimpeur',`${esc(climber.name)} <span class="up">+${climber.lpGained} LP</span>`):'')
+      +(grind?card('⚔️ Plus actif',`${esc(grind.name)} · ${grind.weeklyGames||0} games`):'')
+      +(over?card('🚫 Hors quota',`<span class="down">${over} joueur${over>1?'s':''} > ${cap}</span>`):'');
+  }
+
+  // lignes
+  const rows=document.getElementById('rows');rows.innerHTML='';
+  (d.players||[]).forEach((p,i)=>{
+    const pos=p.error?'—':(p.rankPos||i+1), pcl=(!p.error&&pos<=3)?('p'+pos):'';
+    const av=p.profileIcon?`<img src="${p.profileIcon}" onerror="this.style.visibility='hidden'"/>`:'<img/>';
+    const isOpen=openSet.has(p.riotId);
+    rows.insertAdjacentHTML('beforeend',`<tr class="row ${isOpen?'open':''}" data-id="${esc(p.riotId)}">
+      <td class="pos ${pcl}">${pos}</td>
+      <td><div class="player"><div class="av">${av}</div><div style="min-width:0"><div class="nm">${esc(p.name)}</div><div class="tg">#${esc(p.tag||'')}${p.summonerLevel?' · niv '+p.summonerLevel:''}</div></div></div></td>
+      <td>${badge(p)}</td>
+      <td class="c hide-sm">${wl(p)}</td>
+      <td class="c">${gauge(p,cap)}</td>
+      <td class="c">${delta(p,has)}</td>
+      <td class="c hide-sm">${sparkline(p,d.history)}</td>
+      <td class="c">${p.error?'':'<span class="chev">▶</span>'}</td>
+    </tr>`);
+    if(isOpen&&!p.error){
+      rows.insertAdjacentHTML('beforeend',`<tr class="detail"><td colspan="8"><div class="dbox">
+        <div class="dcol"><div class="dtitle">◆ Progression</div><div id="chart-${i}">${lpChart(p,d.history)}</div></div>
+        <div class="dcol"><div class="dtitle">◆ Dernières games classées · <a href="${opgg(p)}" target="_blank" rel="noopener" style="color:var(--teal);font-family:Inter;letter-spacing:0;text-transform:none">op.gg ↗</a></div><div class="games" id="games-${i}"><div class="loading">…</div></div></div>
+      </div></td></tr>`);
+      loadHistory(p,document.getElementById('games-'+i));
+    }
+  });
+  rows.querySelectorAll('.row').forEach(r=>r.addEventListener('click',()=>toggle(r.dataset.id)));
+}
+
+async function load(){
+  try{const r=await fetch('/api/leaderboard',{cache:'no-store'});const d=await r.json();if(!d||!d.players)throw 0;render(d);}
+  catch(e){render(DEMO);}
+}
+
+// ---- démo (rendu hors-ligne) ----
+const now=Date.now(), MON=now-((new Date(now).getDay()+6)%7)*864e5;
+const DEMO_GAMES=[
+  {champion:'Akali',win:true,kills:12,deaths:4,assists:7,kda:4.8,cs:198,durationMin:28,role:'MIDDLE',endTs:now-2*36e5,remake:false},
+  {champion:'Zed',win:true,kills:9,deaths:6,assists:5,kda:2.3,cs:210,durationMin:31,role:'MIDDLE',endTs:now-6*36e5,remake:false},
+  {champion:'Yasuo',win:false,kills:5,deaths:9,assists:4,kda:1,cs:176,durationMin:24,role:'MIDDLE',endTs:now-9*36e5,remake:false},
+  {champion:'Ahri',win:true,kills:8,deaths:3,assists:11,kda:6.3,cs:189,durationMin:27,role:'MIDDLE',endTs:now-27*36e5,remake:false},
+];
+const DEMO={demo:true,challengeName:'SoloQ Challenge Bitastre',platform:'euw1',hasHistory:true,weeklyCap:20,ddragonVersion:'15.18.1',updatedAt:now,
+  week:{start:MON,end:MON+7*864e5,startSec:Math.floor(MON/1000)},
+  players:[
+    {riotId:'Zed Main#EUW',name:'Zed Main',tag:'EUW',tier:'DIAMOND',division:'II',lp:64,wins:143,losses:120,games:263,winrate:54,score:2664,lpGained:112,weeklyGames:14,overCap:false,rankPos:1,summonerLevel:412},
+    {riotId:'Akali Diff#0007',name:'Akali Diff',tag:'0007',tier:'DIAMOND',division:'IV',lp:12,wins:98,losses:90,games:188,winrate:52,score:2412,lpGained:64,weeklyGames:20,overCap:false,rankPos:2,summonerLevel:233},
+    {riotId:'Support Andy#EUW',name:'Support Andy',tag:'EUW',tier:'PLATINUM',division:'I',lp:88,wins:77,losses:70,games:147,winrate:52,score:1988,lpGained:150,weeklyGames:22,overCap:true,rankPos:3,summonerLevel:180},
+    {riotId:'Jungle Gap#123',name:'Jungle Gap',tag:'123',tier:'GOLD',division:'II',lp:41,wins:55,losses:60,games:115,winrate:48,score:1441,lpGained:-30,weeklyGames:8,overCap:false,rankPos:4,summonerLevel:96},
+    {riotId:'Nouveau#EUW',name:'Nouveau',tag:'EUW',tier:null,division:null,lp:0,wins:0,losses:0,games:0,winrate:null,score:-1,lpGained:0,weeklyGames:3,overCap:false,rankPos:5,summonerLevel:34},
+  ],
+  history:[0,1,2,3,4,5,6].map(k=>({t:now-(6-k)*6*36e5,s:{'Zed Main#EUW':2552+k*18,'Akali Diff#0007':2348+k*11,'Support Andy#EUW':1838+k*25,'Jungle Gap#123':1471-k*5}}))
+};
+
+load();
+setInterval(load,60000);
+setInterval(()=>{if(CUR&&CUR.week)render(CUR);},60000); // rafraîchit le compte à rebours
+</script>
+</body>
+</html>
