@@ -284,7 +284,6 @@ function render(d){
   const b=document.getElementById('banner');
   if(d.demo){b.style.display='block';b.innerHTML='🎮 <b>Mode démo</b> — données d\'exemple. Déploie sur Vercel avec ta clé Riot pour le live.';}
   else if(d.error){b.style.display='block';b.innerHTML='⚠ '+esc(d.error);}
-  else if(!has){b.style.display='block';b.innerHTML='ℹ️ Ajoute une base <b>Upstash</b> (gratuit) pour la progression LP + les courbes. Voir le README.';}
   else b.style.display='none';
   document.getElementById('th-gain').style.opacity=has?1:.4;
 
