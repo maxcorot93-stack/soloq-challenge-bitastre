@@ -27,9 +27,14 @@ async function fetchPlayer(riotId, ver, weekStartSec) {
     const [summ, weeklyGames] = await Promise.all([getSummoner(puuid), getWeeklyGames(puuid, weekStartSec)]);
     const solo = await getSoloRank(puuid, summ && summ.id);
     const tier = solo ? solo.tier : null, division = solo ? solo.rank : null;
-    const lp = solo ? solo.leaguePoints : 0, wins = solo ? solo.wins : 0, losses = solo ? solo.losses : 0;
+    const lp = solo ? solo.leaguePoints : 0;
+    let wins = solo ? solo.wins : 0, losses = solo ? solo.losses : 0, placements = false;
+    if (!solo) { // pas de rang -> en placements : bilan V/D depuis l'historique
+      const pl = await L.recentSoloWL(puuid, 5);
+      wins = pl.wins; losses = pl.losses; placements = pl.games > 0;
+    }
     return {
-      riotId, name, tag, puuid, tier, division, lp, wins, losses,
+      riotId, name, tag, puuid, tier, division, lp, wins, losses, placements,
       games: wins + losses,
       winrate: wins + losses > 0 ? Math.round((wins / (wins + losses)) * 100) : null,
       score: L.ladderScore(tier, division, lp),

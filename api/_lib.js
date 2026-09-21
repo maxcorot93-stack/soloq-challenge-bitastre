@@ -89,8 +89,29 @@ async function getPuuid(name, tag) {
   mem.puuid[id] = acc.puuid; await uSet('puuid:' + id, acc.puuid); return acc.puuid;
 }
 
+// ---- Détail de match (immuable -> cache permanent) ----
+async function getMatch(id) {
+  if (mem.match[id]) return mem.match[id];
+  const fromU = await uGet('match:' + id);
+  if (fromU) { try { const j = JSON.parse(fromU); mem.match[id] = j; return j; } catch { } }
+  const m = await riot(`https://${REGIONAL}.api.riotgames.com/lol/match/v5/matches/${id}`).catch(() => null);
+  if (!m) return null;
+  mem.match[id] = m; await uSet('match:' + id, JSON.stringify(m)); return m;
+}
+// ---- Bilan V/D des N dernières ranked solo (pour les placements) ----
+async function recentSoloWL(puuid, count) {
+  const ids = await riot(`https://${REGIONAL}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&count=${count}`).catch(() => []);
+  let wins = 0, losses = 0;
+  for (const id of (ids || [])) {
+    const m = await getMatch(id); if (!m) continue;
+    const p = (m.info.participants || []).find(x => x.puuid === puuid);
+    if (p) { if (p.win) wins++; else losses++; }
+  }
+  return { wins, losses, games: wins + losses };
+}
+
 module.exports = {
   KEY, PLATFORM, REGIONAL, TZ, UPSTASH, mem,
   regionalRoute, ladderScore, weekWindow,
-  riot, uGet, uSet, ddragonVersion, getPuuid,
+  riot, uGet, uSet, ddragonVersion, getPuuid, getMatch, recentSoloWL,
 };

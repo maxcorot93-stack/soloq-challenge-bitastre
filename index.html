@@ -188,7 +188,7 @@ function fmtDate(t){return new Date(t).toLocaleDateString('fr-FR',{weekday:'shor
 
 function badge(p){
   if(p.error)return `<span class="err">⚠ ${esc(p.error)}</span>`;
-  if(!p.tier)return `<span class="unranked">Non classé</span>`;
+  if(!p.tier)return p.placements?`<span class="badge" style="background:#c8aa6e1e;color:var(--gold);border-color:#c8aa6e55"><span class="crest" style="background:var(--gold)"></span>Placements ${Math.min(p.games,5)}/5</span>`:`<span class="unranked">Non classé</span>`;
   const c=TIER_COL[p.tier]||'#888',div=NODIV(p.tier)?'':' '+p.division;
   return `<span class="badge" style="background:${c}1e;color:${c};border-color:${c}55"><span class="crest" style="background:${c}"></span>${TIER_FR[p.tier]||p.tier}${div} <span class="lp">${p.lp}<small>LP</small></span></span>`;
 }
