@@ -62,8 +62,9 @@ async function riot(url) {
 // ---- Cache mémoire (instance chaude) ----
 const mem = (globalThis.__soloq ||= { board: null, boardTs: 0, puuid: {}, ver: null, verTs: 0, match: {}, hist: {} });
 
-// ---- Upstash (optionnel) ----
-const UURL = process.env.UPSTASH_REDIS_REST_URL, UTOK = process.env.UPSTASH_REDIS_REST_TOKEN;
+// ---- Upstash / Vercel KV (optionnel) — accepte les 2 conventions de nommage ----
+const UURL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const UTOK = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 const UPSTASH = !!(UURL && UTOK);
 async function u(cmd) {
   const r = await fetch(UURL, { method: 'POST', headers: { Authorization: 'Bearer ' + UTOK, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
