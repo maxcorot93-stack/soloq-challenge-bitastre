@@ -53,14 +53,22 @@
   .week .reset b{font-variant-numeric:tabular-nums}
   .week .note{padding:8px 16px;font-size:12px;color:var(--dim)}
   .banner{background:#2a2410;border:1px solid #6b5a1e;color:var(--gold-b);border-radius:6px;padding:10px 14px;margin:0 0 16px;font-size:13px;text-align:center}
-  /* ---- highlights ---- */
-  .highlights{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
-  .hl{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:6px;padding:12px 14px}
-  .hl::before{content:"";position:absolute;top:6px;left:6px;width:7px;height:7px;border-top:1px solid var(--gold);border-left:1px solid var(--gold);opacity:.6}
-  .hl::after{content:"";position:absolute;bottom:6px;right:6px;width:7px;height:7px;border-bottom:1px solid var(--gold);border-right:1px solid var(--gold);opacity:.6}
-  .hl .lab{font-size:10.5px;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px}
-  .hl .val{font-size:16px;font-weight:700;margin-top:4px;display:flex;align-items:center;gap:8px}
-  .hl .big{font-family:Cinzel,serif;font-size:20px}
+  /* ---- podium ---- */
+  .podium{display:flex;justify-content:center;align-items:flex-end;gap:14px;margin:8px 0 22px}
+  .ped{display:flex;flex-direction:column;align-items:center;width:clamp(104px,27vw,196px);text-align:center}
+  .crown{font-size:24px;line-height:1;margin-bottom:2px;filter:drop-shadow(0 0 7px rgba(244,211,94,.6))}
+  .pav{width:64px;height:64px;border:3px solid;border-radius:12px;overflow:hidden;margin-bottom:8px;background:var(--hex)}
+  .pav img{width:100%;height:100%;object-fit:cover}
+  .pname{font-family:Cinzel,serif;font-weight:600;font-size:15px;letter-spacing:.4px;margin-bottom:6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pbadge{margin-bottom:5px}
+  .pdelta{font-weight:800;font-size:12px;margin-bottom:5px;font-variant-numeric:tabular-nums}
+  .pblock{width:100%;border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:8px}
+  .pnum{font-family:Cinzel,serif;font-weight:800;font-size:30px;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+  .ped1 .pblock{height:104px;background:linear-gradient(180deg,rgba(244,211,94,.24),rgba(200,170,110,.03));border-color:rgba(244,211,94,.5)}
+  .ped2 .pblock{height:74px;background:linear-gradient(180deg,rgba(207,216,230,.18),transparent);border-color:rgba(207,216,230,.4)}
+  .ped3 .pblock{height:54px;background:linear-gradient(180deg,rgba(216,151,90,.20),transparent);border-color:rgba(216,151,90,.45)}
+  .ped1 .pav{box-shadow:0 0 20px rgba(244,211,94,.45)}
+  @media(max-width:560px){.pav{width:52px;height:52px}.pname{font-size:12.5px}.pnum{font-size:24px}.podium{gap:8px}.pbadge .badge{font-size:11px;padding:4px 8px}}
   /* ---- table ---- */
   table{width:100%;border-collapse:separate;border-spacing:0 8px}
   thead th{font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--gold);text-align:left;padding:0 12px 4px;font-weight:600;opacity:.85}
@@ -146,7 +154,7 @@
 
   <div class="week" id="week"></div>
   <div id="banner" class="banner" style="display:none"></div>
-  <div id="highlights" class="highlights"></div>
+  <div id="podium"></div>
 
   <table>
     <thead><tr>
@@ -186,6 +194,17 @@ function badge(p){
 }
 function wl(p){if(p.error||!p.games)return '<span class="wr">—</span>';return `<div class="wl">${p.wins}<span style="color:var(--dim)">V</span> ${p.losses}<span style="color:var(--dim)">D</span></div><div class="wlbar"><i style="width:${p.winrate}%"></i></div><div class="wr">${p.winrate}% · ${p.games}g</div>`;}
 function delta(p,has){if(!has||p.error||p.lpGained==null)return '<span class="flat">—</span>';const g=p.lpGained,cls=g>0?'up':g<0?'down':'flat',a=g>0?'▲':g<0?'▼':'–';return `<span class="delta ${cls}">${a} ${g>0?'+':''}${g}</span>`;}
+function ped(p,rank){
+  const col=rank===1?'#f4d35e':rank===2?'#cfd8e6':'#d8975a';
+  const av=p.profileIcon?`<img src="${p.profileIcon}" onerror="this.style.visibility='hidden'"/>`:'<img/>';
+  const g=p.lpGained;
+  const d=(CUR&&CUR.hasHistory&&g!=null)?`<div class="pdelta ${g>0?'up':g<0?'down':'flat'}">${g>0?'▲ +'+g:g<0?'▼ '+g:'– 0'} LP</div>`:'';
+  return `<div class="ped ped${rank}">${rank===1?'<div class="crown">👑</div>':''}
+    <div class="pav" style="border-color:${col}">${av}</div>
+    <div class="pname">${esc(p.name)}</div>
+    <div class="pbadge">${badge(p)}</div>${d}
+    <div class="pblock"><span class="pnum" style="color:${col}">${rank}</span></div></div>`;
+}
 function gauge(p,cap){
   if(p.error)return '';
   const n=p.weeklyGames||0,over=n>cap;
@@ -272,18 +291,9 @@ function render(d){
   const secs=Math.max(0,Math.round((Date.now()-(d.updatedAt||Date.now()))/1000));
   document.getElementById('updated').textContent=d.demo?'exemple':(secs<5?'à l\'instant':'màj il y a '+secs+'s');
 
-  // highlights
-  const hl=document.getElementById('highlights');hl.innerHTML='';
-  if(ok.length){
-    const leader=ok[0], climber=has?ok.slice().sort((a,b)=>(b.lpGained||0)-(a.lpGained||0))[0]:null;
-    const grind=ok.slice().sort((a,b)=>(b.weeklyGames||0)-(a.weeklyGames||0))[0];
-    const over=ok.filter(p=>p.overCap).length;
-    const card=(l,v)=>`<div class="hl"><div class="lab">${l}</div><div class="val">${v}</div></div>`;
-    hl.innerHTML=card('👑 En tête',`<span class="big">${esc(leader.name)}</span>`)
-      +(climber&&climber.lpGained>0?card('🚀 Meilleur grimpeur',`${esc(climber.name)} <span class="up">+${climber.lpGained} LP</span>`):'')
-      +(grind?card('⚔️ Plus actif',`${esc(grind.name)} · ${grind.weeklyGames||0} games`):'')
-      +(over?card('🚫 Hors quota',`<span class="down">${over} joueur${over>1?'s':''} > ${cap}</span>`):'');
-  }
+  // podium (top 3)
+  const pod=document.getElementById('podium'), top=ok.slice(0,3);
+  pod.innerHTML=top.length?('<div class="podium">'+(top[1]?ped(top[1],2):'')+(top[0]?ped(top[0],1):'')+(top[2]?ped(top[2],3):'')+'</div>'):'';
 
   // lignes
   const rows=document.getElementById('rows');rows.innerHTML='';
@@ -328,11 +338,11 @@ const DEMO_GAMES=[
 const DEMO={demo:true,challengeName:'SoloQ Challenge Bitastre',platform:'euw1',hasHistory:true,weeklyCap:20,ddragonVersion:'15.18.1',updatedAt:now,
   week:{start:MON,end:MON+7*864e5,startSec:Math.floor(MON/1000)},
   players:[
-    {riotId:'Zed Main#EUW',name:'Zed Main',tag:'EUW',tier:'DIAMOND',division:'II',lp:64,wins:143,losses:120,games:263,winrate:54,score:2664,lpGained:112,weeklyGames:14,overCap:false,rankPos:1,summonerLevel:412},
-    {riotId:'Akali Diff#0007',name:'Akali Diff',tag:'0007',tier:'DIAMOND',division:'IV',lp:12,wins:98,losses:90,games:188,winrate:52,score:2412,lpGained:64,weeklyGames:20,overCap:false,rankPos:2,summonerLevel:233},
-    {riotId:'Support Andy#EUW',name:'Support Andy',tag:'EUW',tier:'PLATINUM',division:'I',lp:88,wins:77,losses:70,games:147,winrate:52,score:1988,lpGained:150,weeklyGames:22,overCap:true,rankPos:3,summonerLevel:180},
-    {riotId:'Jungle Gap#123',name:'Jungle Gap',tag:'123',tier:'GOLD',division:'II',lp:41,wins:55,losses:60,games:115,winrate:48,score:1441,lpGained:-30,weeklyGames:8,overCap:false,rankPos:4,summonerLevel:96},
-    {riotId:'Nouveau#EUW',name:'Nouveau',tag:'EUW',tier:null,division:null,lp:0,wins:0,losses:0,games:0,winrate:null,score:-1,lpGained:0,weeklyGames:3,overCap:false,rankPos:5,summonerLevel:34},
+    {riotId:'Zed Main#EUW',name:'Zed Main',tag:'EUW',tier:'DIAMOND',division:'II',lp:64,wins:143,losses:120,games:263,winrate:54,score:2664,lpGained:112,weeklyGames:14,overCap:false,rankPos:1,summonerLevel:412,profileIcon:'https://ddragon.leagueoflegends.com/cdn/15.18.1/img/profileicon/28.png'},
+    {riotId:'Akali Diff#0007',name:'Akali Diff',tag:'0007',tier:'DIAMOND',division:'IV',lp:12,wins:98,losses:90,games:188,winrate:52,score:2412,lpGained:64,weeklyGames:20,overCap:false,rankPos:2,summonerLevel:233,profileIcon:'https://ddragon.leagueoflegends.com/cdn/15.18.1/img/profileicon/22.png'},
+    {riotId:'Support Andy#EUW',name:'Support Andy',tag:'EUW',tier:'PLATINUM',division:'I',lp:88,wins:77,losses:70,games:147,winrate:52,score:1988,lpGained:150,weeklyGames:22,overCap:true,rankPos:3,summonerLevel:180,profileIcon:'https://ddragon.leagueoflegends.com/cdn/15.18.1/img/profileicon/9.png'},
+    {riotId:'Jungle Gap#123',name:'Jungle Gap',tag:'123',tier:'GOLD',division:'II',lp:41,wins:55,losses:60,games:115,winrate:48,score:1441,lpGained:-30,weeklyGames:8,overCap:false,rankPos:4,summonerLevel:96,profileIcon:'https://ddragon.leagueoflegends.com/cdn/15.18.1/img/profileicon/15.png'},
+    {riotId:'Nouveau#EUW',name:'Nouveau',tag:'EUW',tier:null,division:null,lp:0,wins:0,losses:0,games:0,winrate:null,score:-1,lpGained:0,weeklyGames:3,overCap:false,rankPos:5,summonerLevel:34,profileIcon:'https://ddragon.leagueoflegends.com/cdn/15.18.1/img/profileicon/7.png'},
   ],
   history:[0,1,2,3,4,5,6].map(k=>({t:now-(6-k)*6*36e5,s:{'Zed Main#EUW':2552+k*18,'Akali Diff#0007':2348+k*11,'Support Andy#EUW':1838+k*25,'Jungle Gap#123':1471-k*5}}))
 };
