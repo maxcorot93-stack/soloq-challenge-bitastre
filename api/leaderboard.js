@@ -16,12 +16,10 @@ async function getSoloRank(puuid, summonerId) {
 async function getWeeklyGames(puuid, startSec) {
   const ids = await L.riot(`https://${L.REGIONAL}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?startTime=${startSec}&queue=420&count=100`).catch(() => null);
   if (!Array.isArray(ids)) return 0;
-  let n = 0; // exclut les remakes du compteur hebdo
+  let n = 0; // exclut les remakes SI le détail est déjà en cache (pas d'appel supplémentaire)
   for (const id of ids) {
-    const m = await L.getMatch(id);
-    if (!m) { n++; continue; }
-    const p = (m.info.participants || []).find(x => x.puuid === puuid);
-    if (p && p.gameEndedInEarlySurrender) continue;
+    const m = await L.getMatch(id, false); // cache seul
+    if (m) { const p = (m.info.participants || []).find(x => x.puuid === puuid); if (p && p.gameEndedInEarlySurrender) continue; }
     n++;
   }
   return n;
@@ -55,6 +53,14 @@ async function fetchPlayer(riotId, ver, weekStartSec) {
   } catch (e) { return { riotId, name, tag, error: e.msg || 'Erreur' }; }
 }
 
+// En cas d'erreur/429, on garde la DERNIÈRE valeur connue au lieu d'afficher une erreur.
+async function fetchPlayerSafe(rid, ver, weekStartSec) {
+  const r = await fetchPlayer(rid, ver, weekStartSec);
+  if (!r.error) { L.mem.lastGood[rid] = r; return r; }
+  const lg = L.mem.lastGood[rid];
+  return lg ? Object.assign({}, lg, { stale: true }) : r;
+}
+
 async function mapLimit(arr, limit, fn) {
   const out = []; let i = 0;
   await Promise.all(Array.from({ length: Math.min(limit, arr.length) }, async () => { while (i < arr.length) { const k = i++; out[k] = await fn(arr[k]); } }));
@@ -76,14 +82,14 @@ module.exports = async (req, res) => {
 
   if (req.query && req.query.reset && process.env.RESET_TOKEN && req.query.reset === process.env.RESET_TOKEN) { await L.uSet('baseline', ''); await L.uSet('history', ''); }
 
-  if (L.mem.board && Date.now() - L.mem.boardTs < 55e3) {
+  if (L.mem.board && Date.now() - L.mem.boardTs < 120e3) {
     res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     return res.status(200).json(L.mem.board);
   }
 
   try {
     const ver = await L.ddragonVersion();
-    let players = await mapLimit(cfg.players, 4, (rid) => fetchPlayer(rid, ver, week.startSec));
+    let players = await mapLimit(cfg.players, 3, (rid) => fetchPlayerSafe(rid, ver, week.startSec));
 
     let history = null;
     if (L.UPSTASH) {

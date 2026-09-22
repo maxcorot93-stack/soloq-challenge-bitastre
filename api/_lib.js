@@ -60,7 +60,7 @@ async function riot(url) {
 }
 
 // ---- Cache mémoire (instance chaude) ----
-const mem = (globalThis.__soloq ||= { board: null, boardTs: 0, puuid: {}, ver: null, verTs: 0, match: {}, hist: {} });
+const mem = (globalThis.__soloq ||= { board: null, boardTs: 0, puuid: {}, ver: null, verTs: 0, match: {}, hist: {}, lastGood: {} });
 
 // ---- Upstash / Vercel KV (optionnel) — accepte les 2 conventions de nommage ----
 const UURL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
@@ -90,10 +90,11 @@ async function getPuuid(name, tag) {
 }
 
 // ---- Détail de match (immuable -> cache permanent) ----
-async function getMatch(id) {
+async function getMatch(id, fetchIfMissing = true) {
   if (mem.match[id]) return mem.match[id];
   const fromU = await uGet('match:' + id);
   if (fromU) { try { const j = JSON.parse(fromU); mem.match[id] = j; return j; } catch { } }
+  if (!fetchIfMissing) return null; // mode cache seul (économise des appels Riot)
   const m = await riot(`https://${REGIONAL}.api.riotgames.com/lol/match/v5/matches/${id}`).catch(() => null);
   if (!m) return null;
   mem.match[id] = m; await uSet('match:' + id, JSON.stringify(m)); return m;
