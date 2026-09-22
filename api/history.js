@@ -25,7 +25,7 @@ function summarize(m, puuid) {
   return {
     matchId: m.metadata.matchId,
     champion: p.championName, champLevel: p.champLevel,
-    win: !!p.win, remake: durSec < 300,
+    win: !!p.win, remake: !!p.gameEndedInEarlySurrender || durSec < 300,
     kills: k, deaths: d, assists: a,
     kda: d === 0 ? (k + a) : Math.round(((k + a) / d) * 10) / 10,
     cs, csPerMin: durSec > 0 ? Math.round((cs / (durSec / 60)) * 10) / 10 : 0,

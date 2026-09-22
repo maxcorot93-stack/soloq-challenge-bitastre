@@ -105,7 +105,7 @@ async function recentSoloWL(puuid, count) {
   for (const id of (ids || [])) {
     const m = await getMatch(id); if (!m) continue;
     const p = (m.info.participants || []).find(x => x.puuid === puuid);
-    if (p) { if (p.win) wins++; else losses++; }
+    if (p && !p.gameEndedInEarlySurrender) { if (p.win) wins++; else losses++; } // remake ignoré
   }
   return { wins, losses, games: wins + losses };
 }

@@ -15,7 +15,16 @@ async function getSoloRank(puuid, summonerId) {
 }
 async function getWeeklyGames(puuid, startSec) {
   const ids = await L.riot(`https://${L.REGIONAL}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?startTime=${startSec}&queue=420&count=100`).catch(() => null);
-  return Array.isArray(ids) ? ids.length : 0;
+  if (!Array.isArray(ids)) return 0;
+  let n = 0; // exclut les remakes du compteur hebdo
+  for (const id of ids) {
+    const m = await L.getMatch(id);
+    if (!m) { n++; continue; }
+    const p = (m.info.participants || []).find(x => x.puuid === puuid);
+    if (p && p.gameEndedInEarlySurrender) continue;
+    n++;
+  }
+  return n;
 }
 
 async function fetchPlayer(riotId, ver, weekStartSec) {
