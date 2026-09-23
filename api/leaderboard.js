@@ -5,16 +5,17 @@ const L = require('./_lib.js');
 
 const WEEKLY_CAP = parseInt(process.env.WEEKLY_CAP || '20', 10);
 
+const keep = e => { if (L.fatal(e)) throw e; return null; }; // avale 404/erreurs transitoires, propage clé morte/429
 async function getSummoner(puuid) {
-  return L.riot(`https://${L.PLATFORM}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`).catch(() => null);
+  return L.riot(`https://${L.PLATFORM}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`).catch(keep);
 }
 async function getSoloRank(puuid, summonerId) {
-  let e = await L.riot(`https://${L.PLATFORM}.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`).catch(() => null);
-  if (!e && summonerId) e = await L.riot(`https://${L.PLATFORM}.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}`).catch(() => null);
+  let e = await L.riot(`https://${L.PLATFORM}.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`).catch(keep);
+  if (!e && summonerId) e = await L.riot(`https://${L.PLATFORM}.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}`).catch(keep);
   return (e || []).find(x => x.queueType === 'RANKED_SOLO_5x5') || null;
 }
 async function getWeeklyGames(puuid, startSec) {
-  const ids = await L.riot(`https://${L.REGIONAL}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?startTime=${startSec}&queue=420&count=100`).catch(() => null);
+  const ids = await L.riot(`https://${L.REGIONAL}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?startTime=${startSec}&queue=420&count=100`).catch(keep);
   if (!Array.isArray(ids)) return 0;
   let n = 0; // exclut les remakes SI le détail est déjà en cache (pas d'appel supplémentaire)
   for (const id of ids) {
@@ -53,12 +54,15 @@ async function fetchPlayer(riotId, ver, weekStartSec) {
   } catch (e) { return { riotId, name, tag, error: e.msg || 'Erreur' }; }
 }
 
-// En cas d'erreur/429, on garde la DERNIÈRE valeur connue au lieu d'afficher une erreur.
+// En cas d'erreur/429/clé morte, on garde la DERNIÈRE valeur connue (mém puis Upstash)
+// au lieu d'afficher "Non classé" ou une erreur.
 async function fetchPlayerSafe(rid, ver, weekStartSec) {
   const r = await fetchPlayer(rid, ver, weekStartSec);
-  if (!r.error) { L.mem.lastGood[rid] = r; return r; }
-  const lg = L.mem.lastGood[rid];
-  return lg ? Object.assign({}, lg, { stale: true }) : r;
+  if (!r.error) { L.mem.lastGood[rid] = r; await L.uSet('lg:' + rid, JSON.stringify(r)); return r; }
+  let lg = L.mem.lastGood[rid];
+  if (!lg) { try { const s = await L.uGet('lg:' + rid); if (s) lg = JSON.parse(s); } catch { } }
+  if (lg) { L.mem.lastGood[rid] = lg; return Object.assign({}, lg, { stale: true }); }
+  return r; // aucune valeur connue -> on remonte l'erreur (ex: clé invalide)
 }
 
 async function mapLimit(arr, limit, fn) {
@@ -99,14 +103,23 @@ module.exports = async (req, res) => {
       let changed = false;
       for (const p of players) {
         if (p.error) continue;
-        if (baseline[p.riotId] == null) { baseline[p.riotId] = { score: p.score, ts: now }; changed = true; }
-        p.startScore = baseline[p.riotId].score; p.lpGained = Math.round(p.score - p.startScore);
+        const ranked = p.score >= 0 && !p.stale; // score réel (ni unranked, ni figé)
+        if (baseline[p.riotId] == null) {
+          if (ranked) { baseline[p.riotId] = { score: p.score, ts: now }; changed = true; } // posée au 1er vrai rang
+        } else if (baseline[p.riotId].score < 0 && ranked) {
+          baseline[p.riotId] = { score: p.score, ts: now }; changed = true; // corrige un baseline pris en placements
+        }
+        if (baseline[p.riotId] != null) { p.startScore = baseline[p.riotId].score; p.lpGained = Math.round(p.score - p.startScore); }
       }
       if (changed) await L.uSet('baseline', JSON.stringify(baseline));
+      // Snapshot (toutes les 20 min) — jamais pendant une période "stale", et seulement
+      // les scores réels (>=0), pour ne pas dessiner de fausses chutes dans les courbes.
+      const anyStale = players.some(p => p.stale);
       const last = hist[hist.length - 1];
-      if (!last || now - last.t > 20 * 60e3) {
-        const snap = { t: now, s: {} }; for (const p of players) if (!p.error) snap.s[p.riotId] = p.score;
-        hist.push(snap); if (hist.length > 250) hist = hist.slice(-250); await L.uSet('history', JSON.stringify(hist));
+      if (!anyStale && (!last || now - last.t > 20 * 60e3)) {
+        const snap = { t: now, s: {} };
+        for (const p of players) if (!p.error && !p.stale && p.score >= 0) snap.s[p.riotId] = p.score;
+        if (Object.keys(snap.s).length) { hist.push(snap); if (hist.length > 250) hist = hist.slice(-250); await L.uSet('history', JSON.stringify(hist)); }
       }
       history = hist;
     }

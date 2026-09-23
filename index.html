@@ -213,14 +213,14 @@ function gauge(p,cap){
 }
 function sparkline(p,history){
   if(!history||history.length<2)return '<span class="wr">—</span>';
-  const s=history.map(h=>h.s&&h.s[p.riotId]).filter(v=>v!=null);if(s.length<2)return '<span class="wr">—</span>';
+  const s=history.map(h=>h.s&&h.s[p.riotId]).filter(v=>v!=null&&v>=0);if(s.length<2)return '<span class="wr">—</span>';
   const w=88,h=26,pad=3,mn=Math.min(...s),mx=Math.max(...s),rg=(mx-mn)||1;
   const pts=s.map((v,i)=>`${(pad+i*(w-2*pad)/(s.length-1)).toFixed(1)},${(h-pad-(v-mn)/rg*(h-2*pad)).toFixed(1)}`).join(' ');
   const col=s[s.length-1]>=s[0]?'var(--green)':'var(--red)';
   return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts}"/></svg>`;
 }
 function lpChart(p,history){
-  const s=(history||[]).map(h=>({t:h.t,v:h.s&&h.s[p.riotId]})).filter(x=>x.v!=null);
+  const s=(history||[]).map(h=>({t:h.t,v:h.s&&h.s[p.riotId]})).filter(x=>x.v!=null&&x.v>=0);
   if(s.length<2)return `<div class="loading">Pas encore assez de données de progression (la courbe se remplit au fil des jours).</div>`;
   const w=360,h=150,px=34,py=16,mn=Math.min(...s.map(x=>x.v)),mx=Math.max(...s.map(x=>x.v)),rg=(mx-mn)||1;
   const X=i=>px+i*(w-px-8)/(s.length-1),Y=v=>h-py-(v-mn)/rg*(h-2*py);
@@ -282,8 +282,10 @@ function render(d){
   }
   // bandeau
   const b=document.getElementById('banner');
+  const anyStale=(d.players||[]).some(p=>p.stale);
   if(d.demo){b.style.display='block';b.innerHTML='🎮 <b>Mode démo</b> — données d\'exemple. Déploie sur Vercel avec ta clé Riot pour le live.';}
   else if(d.error){b.style.display='block';b.innerHTML='⚠ '+esc(d.error);}
+  else if(anyStale){b.style.display='block';b.innerHTML='⏸ <b>Données figées</b> — la clé API Riot a expiré : on affiche les derniers rangs connus. Ajoute une nouvelle clé pour reprendre le live.';}
   else b.style.display='none';
   document.getElementById('th-gain').style.opacity=has?1:.4;
 

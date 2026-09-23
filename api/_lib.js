@@ -58,6 +58,10 @@ async function riot(url) {
   if (!r.ok) throw { code: r.status, msg: 'Erreur Riot ' + r.status };
   return r.json();
 }
+// Erreur "fatale" = clé invalide/expirée (401/403) ou rate-limit (429).
+// On ne doit JAMAIS l'avaler en douce : sinon on affiche "Non classé" à la place
+// du vrai rang. On la propage pour retomber sur la dernière valeur connue.
+function fatal(e) { return !!(e && (e.code === 401 || e.code === 403 || e.code === 429)); }
 
 // ---- Cache mémoire (instance chaude) ----
 const mem = (globalThis.__soloq ||= { board: null, boardTs: 0, puuid: {}, ver: null, verTs: 0, match: {}, hist: {}, lastGood: {} });
@@ -95,13 +99,13 @@ async function getMatch(id, fetchIfMissing = true) {
   const fromU = await uGet('match:' + id);
   if (fromU) { try { const j = JSON.parse(fromU); mem.match[id] = j; return j; } catch { } }
   if (!fetchIfMissing) return null; // mode cache seul (économise des appels Riot)
-  const m = await riot(`https://${REGIONAL}.api.riotgames.com/lol/match/v5/matches/${id}`).catch(() => null);
+  const m = await riot(`https://${REGIONAL}.api.riotgames.com/lol/match/v5/matches/${id}`).catch(e => { if (fatal(e)) throw e; return null; });
   if (!m) return null;
   mem.match[id] = m; await uSet('match:' + id, JSON.stringify(m)); return m;
 }
 // ---- Bilan V/D des N dernières ranked solo (pour les placements) ----
 async function recentSoloWL(puuid, count) {
-  const ids = await riot(`https://${REGIONAL}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&count=${count}`).catch(() => []);
+  const ids = await riot(`https://${REGIONAL}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&count=${count}`).catch(e => { if (fatal(e)) throw e; return []; });
   let wins = 0, losses = 0;
   for (const id of (ids || [])) {
     const m = await getMatch(id); if (!m) continue;
@@ -113,6 +117,6 @@ async function recentSoloWL(puuid, count) {
 
 module.exports = {
   KEY, PLATFORM, REGIONAL, TZ, UPSTASH, mem,
-  regionalRoute, ladderScore, weekWindow,
+  regionalRoute, ladderScore, weekWindow, fatal,
   riot, uGet, uSet, ddragonVersion, getPuuid, getMatch, recentSoloWL,
 };
